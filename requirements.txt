@@ -2,3 +2,4 @@ gymnasium
 stable-baselines3
 scipy
 pygame
+box2d
