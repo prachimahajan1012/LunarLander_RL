@@ -25,6 +25,7 @@ import argparse
 from scipy import stats
 import json
 import time
+import torch
 
 # -------------------------
 # Reward wrappers
@@ -129,8 +130,13 @@ def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=in
     set_random_seed(seed)
     env_fn = make_env(reward_type=reward_type, seed=seed)
     env = DummyVecEnv([env_fn])
+    #device = 'cuda' if torch.cuda.is_available() else "cpu"
+    device = "cpu"
+
     model = PPO('MlpPolicy', env, verbose=0, seed=seed,
-                n_steps=2048, batch_size=64, n_epochs=10, learning_rate=3e-4, clip_range=0.2)
+                n_steps=2048, batch_size=64, n_epochs=10, learning_rate=3e-4, clip_range=0.2, device=device)
+    print("Using device:", device)
+
     # Eval callback
     eval_env_fn = make_env(reward_type=reward_type, seed=seed+1234)
     eval_env = DummyVecEnv([eval_env_fn])

@@ -1,0 +1,10 @@
+{
+  "seed": 4,
+  "reward_type": "dense",
+  "n_timesteps": 2000000,
+  "elapsed_seconds": 992.7694311141968,
+  "mean_return": 256.1801104604638,
+  "std_return": 42.4946477290925,
+  "success_rate": 0.8,
+  "mean_fuel": 135.61
+}
