@@ -72,19 +72,32 @@ class DenseFuelTerminalWrapper(gym.Wrapper):
 # -------------------------
 # Utilities: train, eval, logs
 # -------------------------
-def make_env(reward_type='dense', seed=0, render=False):
-    """Create env with reward wrapper."""
+def make_env(reward_type='dense', seed=0, record_video=False, video_dir=None, video_prefix=None):
+    """Create env with reward wrapper. Optionally wrap with RecordVideo.
+
+    If `record_video` is True, the env is created with `render_mode='rgb_array'`
+    and wrapped with `gym.wrappers.RecordVideo` to save episodes to `video_dir`.
+    """
     def _init():
-        env = gym.make('LunarLander-v3')
+        if record_video:
+            env = gym.make('LunarLander-v3', render_mode='rgb_array')
+        else:
+            env = gym.make('LunarLander-v3')
         env.action_space.seed(seed)
         env.observation_space.seed(seed)
         if reward_type == 'sparse':
-            env = SparseTerminalRewardEnv(env, success_reward=100.0, fail_reward=-100.0, step_penalty=-0.01)
+            env = SparseTerminalRewardEnv(env, success_reward=100.0, fail_reward=-10.0, step_penalty=-0.01)
         elif reward_type == 'dense':
             env = DenseFuelTerminalWrapper(env, fuel_cost=0.05)
         else:
             raise ValueError("unknown reward_type")
-        # Monitor removed — not needed for Gymnasium
+        # Optionally record video (env must support rgb frames)
+        if record_video and video_dir is not None:
+            os.makedirs(video_dir, exist_ok=True)
+            ep_trigger = lambda episode_id: True
+            env = gym.wrappers.RecordVideo(env, video_folder=video_dir,
+                                           name_prefix=(video_prefix or f'{reward_type}_seed{seed}'),
+                                           episode_trigger=ep_trigger)
         return env
     return _init
 
@@ -125,7 +138,8 @@ def evaluate_model(model, env, n_eval_episodes=100, deterministic=True):
 # Main experiment runner
 # -------------------------
 def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=int(2e6),
-                   seed=0, run_id=0, eval_freq=50000, n_eval_episodes=50):
+                   seed=0, run_id=0, eval_freq=50000, n_eval_episodes=50,
+                   record_videos=False, video_dir=None):
     os.makedirs(output_dir, exist_ok=True)
     set_random_seed(seed)
     env_fn = make_env(reward_type=reward_type, seed=seed)
@@ -137,8 +151,13 @@ def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=in
                 n_steps=2048, batch_size=64, n_epochs=10, learning_rate=3e-4, clip_range=0.2, device=device)
     print("Using device:", device)
 
-    # Eval callback
-    eval_env_fn = make_env(reward_type=reward_type, seed=seed+1234)
+    # Eval callback (optionally recording videos)
+    eval_video_dir = None
+    if record_videos:
+        eval_video_dir = video_dir or os.path.join(output_dir, 'videos')
+    eval_env_fn = make_env(reward_type=reward_type, seed=seed+1234,
+                           record_video=record_videos, video_dir=eval_video_dir,
+                           video_prefix=f'eval_{reward_type}_run{run_id}')
     eval_env = DummyVecEnv([eval_env_fn])
     eval_callback = EvalCallback(eval_env, best_model_save_path=output_dir,
                                  log_path=output_dir, eval_freq=eval_freq // env.num_envs,
@@ -149,7 +168,12 @@ def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=in
     model.learn(total_timesteps=n_timesteps, callback=[eval_callback, chk_callback])
     elapsed = time.time() - start_time
 
-    final_eval_env = make_env(reward_type=reward_type, seed=seed+999)()
+    final_video_dir = None
+    if record_videos:
+        final_video_dir = video_dir or os.path.join(output_dir, 'videos')
+    final_eval_env = make_env(reward_type=reward_type, seed=seed+999,
+                              record_video=record_videos, video_dir=final_video_dir,
+                              video_prefix=f'final_{reward_type}_run{run_id}')()
     stats = evaluate_model(model, final_eval_env, n_eval_episodes=100)
     # save model and stats
     model_file = os.path.join(output_dir, f'ppo_{reward_type}_run{run_id}_seed{seed}.zip')
@@ -163,12 +187,13 @@ def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=in
 # -------------------------
 # Batch runner
 # -------------------------
-def batch_run(reward_type, seeds, outdir, n_timesteps):
+def batch_run(reward_type, seeds, outdir, n_timesteps, record_videos=False, video_dir=None):
     results = []
     for i, seed in enumerate(seeds):
         print(f"Running reward={reward_type} seed={seed} ({i+1}/{len(seeds)})")
         res = run_experiment(output_dir=outdir, reward_type=reward_type,
-                             n_timesteps=n_timesteps, seed=seed, run_id=i)
+                             n_timesteps=n_timesteps, seed=seed, run_id=i,
+                             record_videos=record_videos, video_dir=video_dir)
         results.append(res)
     return results
 
@@ -204,6 +229,8 @@ if __name__ == '__main__':
     parser.add_argument('--n_seeds', type=int, default=5)
     parser.add_argument('--n_timesteps', type=float, default=2e6)
     parser.add_argument('--seeds_start', type=int, default=0)
+    parser.add_argument('--record_videos', action='store_true', help='Record evaluation episodes as videos')
+    parser.add_argument('--video_dir', type=str, default=None, help='Directory to save videos (overrides default)')
     args = parser.parse_args()
 
     seeds = [args.seeds_start + i for i in range(args.n_seeds)]
@@ -211,10 +238,10 @@ if __name__ == '__main__':
     sparse_dir = os.path.join(args.outdir, 'sparse')
 
     print("=== Running dense experiments ===")
-    dense_results = batch_run('dense', seeds, dense_dir, int(args.n_timesteps))
+    dense_results = batch_run('dense', seeds, dense_dir, int(args.n_timesteps), record_videos=args.record_videos, video_dir=args.video_dir)
 
     print("=== Running sparse experiments ===")
-    sparse_results = batch_run('sparse', seeds, sparse_dir, int(args.n_timesteps))
+    sparse_results = batch_run('sparse', seeds, sparse_dir, int(args.n_timesteps), record_videos=args.record_videos, video_dir=args.video_dir)
 
     # aggregate
     df = aggregate_results([dense_dir, sparse_dir])
