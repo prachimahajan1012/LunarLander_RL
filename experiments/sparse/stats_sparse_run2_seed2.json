@@ -1,0 +1,10 @@
+{
+  "seed": 2,
+  "reward_type": "sparse",
+  "n_timesteps": 2000000,
+  "elapsed_seconds": 878.7422533035278,
+  "mean_return": 41.227199999999996,
+  "std_return": 90.76027897797582,
+  "success_rate": 0.71,
+  "mean_fuel": 60.61
+}
