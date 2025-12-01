@@ -1,0 +1,57 @@
+Use the LunarLander environment.
+Train RL agents under two reward regimes:
+
+Sparse reward: basically no intermediate rewards, only something at the end (successful landing vs crash).
+
+Dense reward: more informative per step, e.g.:  Reward/penalty for proximity or progress.   Penalty for fuel consumption (using engines).
+
+Then compare the learning outcomes:
+Performance metrics (returns, success rate, etc.)
+Optionally learning curves across training.
+Some statistical comparison is a plus (t-test etc.).
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Main components:
+
+Reward wrappers
+    SparseTerminalRewardEnv : Every step gets a tiny negative reward (time/step penalty), and only at the end you give a big positive or negative reward depending on landing success.
+            Intermediate steps: reward = -0.01 (small penalty just to encourage efficient episodes).
+            End of episode:
+            If both legs are touching: reward = -0.01 + 100 ≈ 100 → success.
+            Else: reward = -0.01 - 100 ≈ -100 → failure.
+            overwritten reward instead of adding to it.
+
+    DenseFuelTerminalWrapper
+            Kept Original LunarLander Reward functon( already includes dense shaping: distance to pad, angle alignment, soft landing etc. ) and also added ense penalty for fuel usage:
+            Any action that is not “do nothing” (0) subtracts fuel_cost (0.05) from reward.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Environment factory
+    make_env(...)
+            Applies the appropriate wrapper depending on reward_type
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Training + evaluation
+    run_experiment(...) for one run
+            Uses EvalCallback for periodic evaluation during training.
+            Uses CheckpointCallback to save models across training.
+            This is used later to plot learning curves, which directly addresses “learning results”.
+    batch_run(...) for multiple seeds
+    evaluate_model(...) for final stats
+            So for each regime following is measured:
+            Mean return (how good the policy is overall)
+            Std of return (variability)
+            Success rate (how often both legs are landed)
+            Mean fuel used (efficiency)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Aggregation & plotting
+    aggregate_results(...)
+    plot_metric(...)
+
+    In __main__:
+            Run multiple seeds for each regime (default 5).
+            Save per-run statistics as JSON.
+            Build a single CSV with all runs and save it.
+            Compute the mean and std of performance for each reward regime.
+            Run a Welch’s t-test to check if differences in mean performance are statistically significant.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CLI main
+    Runs dense + sparse experiments across seeds
+    Saves CSV, plots, and does t-tests
