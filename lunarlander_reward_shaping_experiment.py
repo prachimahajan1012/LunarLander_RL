@@ -32,15 +32,15 @@ import torch
 # -------------------------
 class SparseTerminalRewardEnv(gym.Wrapper):
     """Sparse reward: only terminal + step penalty."""
-    def __init__(self, env, success_reward=100.0, fail_reward=-100.0, step_penalty=-0.01):
+    def __init__(self, env, success_reward=100.0, fail_reward=-100.0):
         super().__init__(env)
         self.success_reward = success_reward
         self.fail_reward = fail_reward
-        self.step_penalty = step_penalty
+        
 
     def step(self, action):
         obs, reward, terminated, truncated, info = self.env.step(action)
-        reward = self.step_penalty
+        reward = 0.0
         done = terminated or truncated
         if done:
             # LunarLander-v2 state: [pos.x pos.y vel.x vel.y angle angularVel leg1 contact leg2 contact]
@@ -86,7 +86,7 @@ def make_env(reward_type='dense', seed=0, record_video=False, video_dir=None, vi
         env.action_space.seed(seed)
         env.observation_space.seed(seed)
         if reward_type == 'sparse':
-            env = SparseTerminalRewardEnv(env, success_reward=100.0, fail_reward=-10.0, step_penalty=-0.01)
+            env = SparseTerminalRewardEnv(env, success_reward=100.0, fail_reward=-100.0)
         elif reward_type == 'dense':
             env = DenseFuelTerminalWrapper(env, fuel_cost=0.05)
         else:
