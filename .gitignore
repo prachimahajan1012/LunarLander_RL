@@ -2,7 +2,3 @@
 venv
 
 # Logs directory
-experiments
-*.json
-*.json
-*.zip
