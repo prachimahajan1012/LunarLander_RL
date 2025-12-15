@@ -2,6 +2,11 @@ gymnasium
 stable-baselines3
 scipy
 pygame
-box2d   
+box2d
 seaborn
 moviepy
+streamlit
+imageio
+torch
+pandas
+matplotlib
