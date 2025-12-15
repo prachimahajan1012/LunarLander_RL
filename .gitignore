@@ -1,4 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
 # Virtual environment
 venv
+ENV/
+env/
+.venv
 
-# Logs directory
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+experiments/videos_*/
+experiments/models_*/
+*.npz
+
+# Streamlit
+.streamlit/secrets.toml
+.streamlit/cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+logs/
+
+# Temporary
+*.tmp
+temp/
+tmp/
+
+# Docker
+docker-compose.override.yml
