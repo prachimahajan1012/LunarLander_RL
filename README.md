@@ -4,7 +4,7 @@
 
 ### 1. Install Dependencies
 ```bash
-pip install streamlit imageio matplotlib pandas
+pip install -r requirements.txt
 ```
 
 ### 2. Run the Streamlit App
@@ -83,13 +83,6 @@ docker-compose down
 - `Success Reward`: Points for successful landing (50-500, default 100)
 - `Failure Reward`: Points for crash/failure (-500 to -10, default -100)
 - `Fuel Penalty`: Penalty per timestep (-1.0 to 0.0, default -0.05)
-
-
-### Video playback not working
-Make sure `imageio` is installed:
-```bash
-pip install imageio
-```
 
 ### Docker memory issues
 Adjust memory limits in `docker-compose.yml`:
