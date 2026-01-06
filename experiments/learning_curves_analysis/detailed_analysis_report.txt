@@ -1,0 +1,63 @@
+======================================================================
+LEARNING CURVE ANALYSIS REPORT
+Training Progress: Sparse vs Dense Reward Shaping
+======================================================================
+
+======================================================================
+SPARSE REWARD TRAINING ANALYSIS
+======================================================================
+
+Number of evaluation checkpoints: 40
+Training range: 50,000 to 2,000,000 steps
+
+Early Training (1st checkpoint):
+  Mean Return:      -100.0
+  Median Return:    -100.0
+  Std Dev:             0.0
+  Success Rate:       0.0%
+
+Late Training (last checkpoint):
+  Mean Return:        92.0
+  Median Return:     100.0
+  Std Dev:            39.2
+  Success Rate:      96.0%
+
+✗ Did not converge to 200
+  Best performance: 92.0 at 2,000,000 steps
+
+
+======================================================================
+DENSE REWARD TRAINING ANALYSIS
+======================================================================
+
+Number of evaluation checkpoints: 40
+Training range: 50,000 to 2,000,000 steps
+
+Early Training (1st checkpoint):
+  Mean Return:      -992.8
+  Median Return:    -613.2
+  Std Dev:           935.0
+  Success Rate:       0.0%
+
+Late Training (last checkpoint):
+  Mean Return:       241.4
+  Median Return:     260.3
+  Std Dev:            64.9
+  Success Rate:      92.0%
+
+✓ Converged to >=200 at: 550,000 steps (0.6M)
+
+
+======================================================================
+COMPARISON: SPARSE vs DENSE
+======================================================================
+
+NO: Sparse did not converge to 200
+YES: Dense converged at 550,000 steps
+
+Final Performance (at end of training):
+  Sparse Return:     92.0
+  Dense Return:     241.4
+  Difference:      +149.4
+
+======================================================================

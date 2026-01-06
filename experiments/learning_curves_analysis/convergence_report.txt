@@ -1,0 +1,27 @@
+============================================================
+LEARNING CURVE ANALYSIS REPORT
+Sparse vs Dense Reward Training
+============================================================
+
+SPARSE REWARD TRAINING
+------------------------------------------------------------
+Training points evaluated: 40
+Final mean return: 80.0
+Final success rate: 90.0%
+Best mean return: 100.0
+Best success rate: 100.0%
+Did not converge to 200 threshold
+
+DENSE REWARD TRAINING
+------------------------------------------------------------
+Training points evaluated: 40
+Final mean return: 339.4
+Final success rate: 90.0%
+Best mean return: 362.8
+Best success rate: 100.0%
+Converged at: 550,000 steps (0.6M steps)
+
+COMPARISON
+------------------------------------------------------------
+Final return difference: Dense - Sparse = +259.4
+============================================================
