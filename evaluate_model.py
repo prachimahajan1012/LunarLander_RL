@@ -99,7 +99,7 @@ def get_model_path(reward_type, sparse_success=None, sparse_fail=None,
     return model_dir
 
 
-def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_dir=None):
+def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_dir=None, reward_type=""):
     """
     Evaluate a model and optionally record videos.
     
@@ -109,6 +109,7 @@ def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_
         num_episodes: Number of episodes to evaluate
         record_videos: Whether to record videos
         video_dir: Directory to save videos
+        reward_type: Type of reward (sparse/dense) for video subdirectory
     
     Returns:
         Dictionary with evaluation metrics
@@ -175,7 +176,7 @@ def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_
         # Save video
         if record_videos and video_dir and frames:
             try:
-                save_video_frames(frames, video_dir, f"episode_{episode:04d}")
+                save_video_frames(frames, video_dir, f"episode_{episode:04d}", reward_type)
             except Exception as e:
                 print(f"Error saving video for episode {episode}: {e}")
         
@@ -198,12 +199,14 @@ def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_
     return stats
 
 
-def save_video_frames(frames, video_dir, name):
+def save_video_frames(frames, video_dir, name, reward_type=""):
     """Save frames as MP4 video using imageio."""
     try:
         import imageio
         
         video_dir = Path(video_dir)
+        if reward_type:
+            video_dir = video_dir / reward_type.lower()
         video_dir.mkdir(parents=True, exist_ok=True)
         
         output_path = video_dir / f"{name}.mp4"
@@ -242,6 +245,8 @@ def main():
                        help="Fuel penalty for dense")
     parser.add_argument("--reward_type", choices=["sparse", "dense"], default="sparse",
                        help="Which reward type to evaluate")
+    parser.add_argument("--checkpoint", type=str, default="best",
+                       help="Checkpoint to load: 'best' for best_model.zip, or step count for checkpoint (e.g., '1000000')")
     parser.add_argument("--model_path", type=str, default=None,
                        help="Path to saved model. If not provided, uses default location")
     parser.add_argument("--record_videos", action="store_true",
@@ -274,13 +279,27 @@ def main():
     # Determine model path
     if args.model_path is None:
         experiments_dir = Path(__file__).parent / "experiments"
+        reward_type_lower = args.reward_type.lower()
         
-        if args.reward_type == "sparse":
-            model_dir = experiments_dir / f"sparse2"
+        # Determine which directory (sparse, sparse2, dense)
+        if reward_type_lower == "sparse":
+            # Check sparse2 first, then sparse
+            for model_dir_name in ["sparse2", "sparse"]:
+                model_dir = experiments_dir / model_dir_name
+                if model_dir.exists():
+                    break
+            else:
+                model_dir = experiments_dir / "sparse"
         else:
-            model_dir = experiments_dir / f"dense"
+            model_dir = experiments_dir / "dense"
         
-        model_path = experiments_dir / model_dir / "best_model.zip"
+        # Determine which checkpoint file
+        if args.checkpoint == "best":
+            model_path = model_dir / "best_model.zip"
+        else:
+            # args.checkpoint is a step count
+            checkpoint_pattern = f"ckpt_{reward_type_lower}_run0_{args.checkpoint}_steps.zip"
+            model_path = model_dir / checkpoint_pattern
     else:
         model_path = Path(args.model_path)
     
@@ -289,8 +308,12 @@ def main():
         print("Available models:")
         experiments_dir = Path(__file__).parent / "experiments"
         for d in experiments_dir.glob("*"):
-            if d.is_dir() and (d / "best_model.zip").exists():
-                print(f"  - {d}")
+            if d.is_dir():
+                models = list(d.glob("*.zip"))
+                if models:
+                    print(f"  {d.name}:")
+                    for m in sorted(models)[:10]:
+                        print(f"    - {m.name}")
         sys.exit(1)
     
     # Run evaluation
@@ -302,7 +325,8 @@ def main():
         env,
         num_episodes=args.eval_episodes,
         record_videos=args.record_videos,
-        video_dir=args.video_dir
+        video_dir=args.video_dir,
+        reward_type=args.reward_type
     )
     
     if stats:
@@ -317,7 +341,11 @@ def main():
         
         # Save stats
         if args.video_dir:
-            stats_path = Path(args.video_dir) / f"stats_{args.reward_type}_{args.eval_episodes}_episodes.json"
+            video_dir_path = Path(args.video_dir)
+            reward_type_dir = video_dir_path / args.reward_type.lower()
+            reward_type_dir.mkdir(parents=True, exist_ok=True)
+            
+            stats_path = reward_type_dir / f"stats_{args.reward_type}_{args.eval_episodes}_episodes.json"
             with open(stats_path, 'w') as f:
                 json.dump(stats, f, indent=2)
             print(f"\nStats saved to: {stats_path}")
