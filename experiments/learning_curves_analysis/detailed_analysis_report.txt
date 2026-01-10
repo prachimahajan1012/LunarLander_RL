@@ -43,7 +43,7 @@ Late Training (last checkpoint):
   Mean Return:       241.4
   Median Return:     260.3
   Std Dev:            64.9
-  Success Rate:      92.0%
+  Success Rate:      90.0%
 
 ✓ Converged to >=200 at: 550,000 steps (0.6M)
 
