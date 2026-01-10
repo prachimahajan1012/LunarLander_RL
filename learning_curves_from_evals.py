@@ -50,9 +50,12 @@ def analyze_evaluations(eval_data, reward_type):
         std_return = np.std(episode_returns)
         median_return = np.median(episode_returns)
         
-        # Success rate estimation (for sparse: close to 100 means success, 
+        # Success rate estimation (for sparse: 100 means success, 
         # for dense: need reward > 200 threshold)
-        success_count = np.sum(episode_returns >=100)  # Simple heuristic
+        if reward_type == "sparse":
+            success_count = np.sum(episode_returns == 100)  # Simple heuristic
+        else:  # dense
+            success_count = np.sum(episode_returns >=200)  # Simple heuristic
         success_rate = success_count / len(episode_returns)
         
         stats_by_timestep[int(t)] = {
@@ -150,7 +153,7 @@ def plot_learning_curves(sparse_stats, dense_stats, output_dir):
     
     ax.set_xlabel('Training Steps (Millions)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
-    ax.set_title('Landing Success Rate (Return >= 100)', fontsize=13, fontweight='bold')
+    ax.set_title('Landing Success Rate', fontsize=13, fontweight='bold')
     ax.legend(fontsize=11, loc='lower right')
     ax.grid(True, alpha=0.3)
     ax.set_ylim([0, 105])
