@@ -50,12 +50,9 @@ def analyze_evaluations(eval_data, reward_type):
         std_return = np.std(episode_returns)
         median_return = np.median(episode_returns)
         
-        # Success rate estimation (for sparse: 100 means success, 
+        # Success rate estimation (for sparse: close to 100 means success, 
         # for dense: need reward > 200 threshold)
-        if reward_type == "sparse":
-            success_count = np.sum(episode_returns == 100)  # Simple heuristic
-        else:  # dense
-            success_count = np.sum(episode_returns >=200)  # Simple heuristic
+        success_count = np.sum(episode_returns >=100)  # Simple heuristic
         success_rate = success_count / len(episode_returns)
         
         stats_by_timestep[int(t)] = {
@@ -107,20 +104,16 @@ def plot_learning_curves(sparse_stats, dense_stats, output_dir):
     ax = axes[0, 0]
     if sparse_means:
         ax.plot(sparse_steps_m, sparse_means, 'o-', label='Sparse', linewidth=2.5, markersize=8, color='#1f77b4')
-        ax.fill_between(sparse_steps_m, 
-                        np.array(sparse_means) - np.array(sparse_stds),
-                        np.array(sparse_means) + np.array(sparse_stds),
-                        alpha=0.2, color='#1f77b4')
+
     
     if dense_means:
         ax.plot(dense_steps_m, dense_means, 's-', label='Dense', linewidth=2.5, markersize=8, color='#ff7f0e')
-        ax.fill_between(dense_steps_m,
-                        np.array(dense_means) - np.array(dense_stds),
-                        np.array(dense_means) + np.array(dense_stds),
-                        alpha=0.2, color='#ff7f0e')
+
     
     # Add convergence threshold line
     ax.axhline(y=200, color='red', linestyle='--', linewidth=2, alpha=0.5, label='Solved (200)')
+    ax.axhline(y=100, color='red', linestyle='--', linewidth=2, alpha=0.5, label='Solved (100)')
+
     
     ax.set_xlabel('Training Steps (Millions)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Episode Return', fontsize=12, fontweight='bold')
@@ -153,7 +146,7 @@ def plot_learning_curves(sparse_stats, dense_stats, output_dir):
     
     ax.set_xlabel('Training Steps (Millions)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
-    ax.set_title('Landing Success Rate', fontsize=13, fontweight='bold')
+    ax.set_title('Landing Success Rate (Return >= 100)', fontsize=13, fontweight='bold')
     ax.legend(fontsize=11, loc='lower right')
     ax.grid(True, alpha=0.3)
     ax.set_ylim([0, 105])
@@ -378,14 +371,14 @@ def main():
     """Main function."""
     
     experiments_dir = Path(__file__).parent / "experiments"
-    output_dir = experiments_dir / "learning_curves_analysis"
+    output_dir = experiments_dir / "learning_curves_analysis_base"
     
     print("=" * 70)
     print("LEARNING CURVE ANALYSIS FROM EVALUATION CHECKPOINTS")
     print("=" * 70)
     
     # Load sparse evaluations
-    sparse_eval_path = experiments_dir / "sparse2" / "evaluations.npz"
+    sparse_eval_path = experiments_dir / "sparse_base" / "evaluations.npz"
     sparse_stats = None
     
     if sparse_eval_path.exists():
@@ -397,7 +390,7 @@ def main():
         print(f"  ✗ Not found: {sparse_eval_path}")
     
     # Load dense evaluations
-    dense_eval_path = experiments_dir / "dense" / "evaluations.npz"
+    dense_eval_path = experiments_dir / "dense_base" / "evaluations.npz"
     dense_stats = None
     
     if dense_eval_path.exists():

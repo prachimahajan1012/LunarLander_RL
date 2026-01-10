@@ -91,9 +91,9 @@ def get_model_path(reward_type, sparse_success=None, sparse_fail=None,
     experiments_dir.mkdir(exist_ok=True)
     
     if reward_type == "sparse":
-        model_dir = experiments_dir / f"sparse_s{sparse_success}_f{sparse_fail}"
+        model_dir = experiments_dir / f"sparse_base"
     else:
-        model_dir = experiments_dir / f"dense_s{dense_success}_f{dense_fail}_f{fuel_penalty}"
+        model_dir = experiments_dir / f"dense_base"
     
     model_dir.mkdir(exist_ok=True)
     return model_dir
@@ -289,9 +289,9 @@ def main():
                 if model_dir.exists():
                     break
             else:
-                model_dir = experiments_dir / "sparse"
+                model_dir = experiments_dir / "sparse_base"
         else:
-            model_dir = experiments_dir / "dense"
+            model_dir = experiments_dir / "dense_base"
         
         # Determine which checkpoint file
         if args.checkpoint == "best":

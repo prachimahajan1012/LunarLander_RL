@@ -178,9 +178,9 @@ def collect_learning_data(experiments_dir, reward_type):
         dict mapping timestep -> evaluation stats
     """
     if reward_type == "sparse":
-        reward_dir = experiments_dir / "sparse2"
+        reward_dir = experiments_dir / "sparse_base"
     elif reward_type == "dense":
-        reward_dir = experiments_dir / "dense"
+        reward_dir = experiments_dir / "dense_base"
     else:
         raise ValueError(f"Unknown reward type: {reward_type}")
     
@@ -217,9 +217,9 @@ def collect_learning_data(experiments_dir, reward_type):
 def load_training_stats(experiments_dir, reward_type):
     """Load pre-computed training stats from JSON files."""
     if reward_type == "sparse":
-        reward_dir = experiments_dir / "sparse2"
+        reward_dir = experiments_dir / "sparse_base"
     elif reward_type == "dense":
-        reward_dir = experiments_dir / "dense"
+        reward_dir = experiments_dir / "dense_base"
     else:
         raise ValueError(f"Unknown reward type: {reward_type}")
     
@@ -270,6 +270,10 @@ def plot_learning_curves(learning_data_sparse, learning_data_dense, output_dir):
     ax.set_xlabel('Training Steps (Millions)', fontsize=11)
     ax.set_ylabel('Mean Episode Return', fontsize=11)
     ax.set_title('Episode Return during Training', fontsize=12, fontweight='bold')
+    # Add convergence threshold line
+    ax.axhline(y=200, color='red', linestyle='--', linewidth=2, alpha=0.5, label='Solved (200)')
+    ax.axhline(y=100, color='red', linestyle='--', linewidth=2, alpha=0.5, label='Solved (100)')
+
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
     
@@ -477,7 +481,7 @@ def main():
     """Main function."""
     
     experiments_dir = Path(__file__).parent / "experiments"
-    output_dir = experiments_dir / "learning_curves_analysis"
+    output_dir = experiments_dir / "learning_curves_analysis_base"
     
     print("Collecting learning curve data...")
     
