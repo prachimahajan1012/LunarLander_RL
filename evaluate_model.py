@@ -1,90 +1,24 @@
 #!/usr/bin/env python3
 """
-evaluate_model.py
-
-Evaluate a trained PPO model on LunarLander with custom reward parameters.
-Supports both sparse and dense rewards.
+Evaluates a trained PPO model on LunarLander under different reward settings (Sparse and Dense).
 """
 
 import os
 import sys
 import argparse
-import json
 import numpy as np
 import gymnasium as gym
 from pathlib import Path
 from datetime import datetime
-import torch
 
 # Suppress TensorFlow warnings if using stable-baselines3
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-
-# ---- Reward Wrappers (from main experiment) ----
-
-class SparseTerminalRewardEnv(gym.Wrapper):
-    """Sparse reward: only terminal + step penalty."""
-    def __init__(self, env, success_reward=100.0, fail_reward=-100.0):
-        super().__init__(env)
-        self.success_reward = success_reward
-        self.fail_reward = fail_reward
-
-    def step(self, action):
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        reward = 0.0
-        done = terminated or truncated
-        if done:
-            try:
-                leg1 = bool(obs[6])
-                leg2 = bool(obs[7])
-            except:
-                leg1 = leg2 = False
-            
-            landed = leg1 and leg2
-            reward = self.success_reward if landed else self.fail_reward
-        
-        return obs, reward, terminated, truncated, info
-
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
+from lunarlander_reward_shaping_experiment import SparseTerminalRewardEnv, DenseFuelTerminalWrapper
 
 
-class DenseRewardEnv(gym.Wrapper):
-    """Dense reward with fuel penalty shaped reward."""
-    def __init__(self, env, success_reward=100.0, fail_reward=-100.0, fuel_penalty=-0.05):
-        super().__init__(env)
-        self.success_reward = success_reward
-        self.fail_reward = fail_reward
-        self.fuel_penalty = fuel_penalty
-
-    def step(self, action):
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        done = terminated or truncated
-        
-        # Add fuel penalty
-        reward += self.fuel_penalty
-        
-        if done:
-            try:
-                leg1 = bool(obs[6])
-                leg2 = bool(obs[7])
-            except:
-                leg1 = leg2 = False
-            
-            landed = leg1 and leg2
-            terminal_reward = self.success_reward if landed else self.fail_reward
-            reward += terminal_reward
-        
-        return obs, reward, terminated, truncated, info
-
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
-
-
-def get_model_path(reward_type, sparse_success=None, sparse_fail=None, 
-                  dense_success=None, dense_fail=None, fuel_penalty=None):
+def get_model_path(reward_type):
     """Get or create path to model directory."""
     
     experiments_dir = Path(__file__).parent / "experiments"
@@ -161,7 +95,6 @@ def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_
                 except:
                     pass
         
-        # Check if successful (both legs on ground)
         try:
             leg1 = bool(obs[6])
             leg2 = bool(obs[7])
@@ -187,7 +120,6 @@ def evaluate_model(model_path, env, num_episodes=50, record_videos=False, video_
     # Calculate statistics
     stats = {
         "mean_reward": float(np.mean(episode_rewards)),
-        "std_reward": float(np.std(episode_rewards)),
         "min_reward": float(np.min(episode_rewards)),
         "max_reward": float(np.max(episode_rewards)),
         "mean_length": float(np.mean(episode_lengths)),
@@ -233,16 +165,6 @@ def main():
     
     parser.add_argument("--eval_episodes", type=int, default=50,
                        help="Number of episodes to evaluate")
-    parser.add_argument("--sparse_success", type=float, default=100.0,
-                       help="Success reward for sparse")
-    parser.add_argument("--sparse_fail", type=float, default=-100.0,
-                       help="Failure reward for sparse")
-    parser.add_argument("--dense_success", type=float, default=100.0,
-                       help="Success reward for dense")
-    parser.add_argument("--dense_fail", type=float, default=-100.0,
-                       help="Failure reward for dense")
-    parser.add_argument("--fuel_penalty", type=float, default=-0.05,
-                       help="Fuel penalty for dense")
     parser.add_argument("--reward_type", choices=["sparse", "dense"], default="sparse",
                        help="Which reward type to evaluate")
     parser.add_argument("--checkpoint", type=str, default="best",
@@ -263,33 +185,17 @@ def main():
     base_env = gym.make("LunarLander-v3", render_mode=args.render_mode)
     
     if args.reward_type == "sparse":
-        env = SparseTerminalRewardEnv(
-            base_env,
-            success_reward=args.sparse_success,
-            fail_reward=args.sparse_fail
-        )
+        env = SparseTerminalRewardEnv(base_env)
     else:
-        env = DenseRewardEnv(
-            base_env,
-            success_reward=args.dense_success,
-            fail_reward=args.dense_fail,
-            fuel_penalty=args.fuel_penalty
-        )
+        env = DenseFuelTerminalWrapper(base_env)
     
     # Determine model path
     if args.model_path is None:
         experiments_dir = Path(__file__).parent / "experiments"
         reward_type_lower = args.reward_type.lower()
         
-        # Determine which directory (sparse, sparse2, dense)
         if reward_type_lower == "sparse":
-            # Check sparse2 first, then sparse
-            for model_dir_name in ["sparse2", "sparse"]:
-                model_dir = experiments_dir / model_dir_name
-                if model_dir.exists():
-                    break
-            else:
-                model_dir = experiments_dir / "sparse_base"
+            model_dir = experiments_dir / "sparse_base"
         else:
             model_dir = experiments_dir / "dense_base"
         
@@ -298,7 +204,7 @@ def main():
             model_path = model_dir / "best_model.zip"
         else:
             # args.checkpoint is a step count
-            checkpoint_pattern = f"ckpt_{reward_type_lower}_run0_{args.checkpoint}_steps.zip"
+            checkpoint_pattern = f"ckpt_{reward_type_lower}_seed0_{args.checkpoint}_steps.zip"
             model_path = model_dir / checkpoint_pattern
     else:
         model_path = Path(args.model_path)
@@ -320,7 +226,7 @@ def main():
     print(f"Evaluating {args.reward_type} model from {model_path}")
     print(f"Episodes: {args.eval_episodes}")
     
-    stats = evaluate_model(
+    evaluate_model(
         str(model_path),
         env,
         num_episodes=args.eval_episodes,
@@ -329,29 +235,7 @@ def main():
         reward_type=args.reward_type
     )
     
-    if stats:
-        print("\n" + "="*50)
-        print("EVALUATION RESULTS")
-        print("="*50)
-        for key, value in stats.items():
-            if isinstance(value, float):
-                print(f"{key}: {value:.4f}")
-            else:
-                print(f"{key}: {value}")
-        
-        # Save stats
-        if args.video_dir:
-            video_dir_path = Path(args.video_dir)
-            reward_type_dir = video_dir_path / args.reward_type.lower()
-            reward_type_dir.mkdir(parents=True, exist_ok=True)
-            
-            stats_path = reward_type_dir / f"stats_{args.reward_type}_{args.eval_episodes}_episodes.json"
-            with open(stats_path, 'w') as f:
-                json.dump(stats, f, indent=2)
-            print(f"\nStats saved to: {stats_path}")
-    
     env.close()
-
 
 if __name__ == "__main__":
     main()
