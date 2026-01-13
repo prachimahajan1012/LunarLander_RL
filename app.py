@@ -1,22 +1,16 @@
 """
-Streamlit web interface for LunarLander reward shaping experimentation.
-Allows interactive tweaking of reward parameters and visualization of results.
+Streamlit web interface for viewing LunarLander evaluation results (videos).
+Allows model checkpoint selection.
 """
 
 import streamlit as st
-import os
 import sys
 import json
 import subprocess
-import numpy as np
 from pathlib import Path
-import pandas as pd
-from datetime import datetime
-import tempfile
 import shutil
 import re
 
-# Page config
 st.set_page_config(
     page_title="LunarLander Reward Shaper",
     page_icon="🚀",
@@ -24,9 +18,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Title
 st.title("🚀 LunarLander Reward Shaper")
-st.markdown("Tweak reward parameters and visualize training results in real-time")
+st.markdown("Choose reward type and visualize model evaluation results.")
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent
@@ -40,8 +33,8 @@ VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
 def get_checkpoint_steps(reward_dir):
     """Extract checkpoint step counts from model files."""
     checkpoints = {}
-    for model_file in reward_dir.glob("ckpt_*_steps.zip"):
-        # Parse filename: ckpt_<type>_run<N>_<steps>_steps.zip
+    for model_file in reward_dir.glob("ckpt_*_*_steps.zip"):
+        # Parse filename: ckpt_<type>_seed<N>_<steps>_steps.zip
         match = re.search(r'_(\d+)_steps\.zip$', model_file.name)
         if match:
             steps = int(match.group(1))
@@ -51,12 +44,12 @@ def get_checkpoint_steps(reward_dir):
 def get_every_fifth_checkpoint(checkpoints):
     """Get every 5th checkpoint from the sorted checkpoints."""
     sorted_steps = sorted(checkpoints.keys())
-    # Get every 5th checkpoint
+    # Get every 5th checkpoint (cause there are too many)
     every_fifth = [sorted_steps[i] for i in range(0, len(sorted_steps), 5)]
     return every_fifth
 
 def get_checkpoint_options(reward_type):
-    """Get list of checkpoint options: every 5th + best model."""
+    """Get list of checkpoint options"""
     reward_dir = EXPERIMENTS_DIR / reward_type.lower()
     
     if not reward_dir.exists():
@@ -67,8 +60,7 @@ def get_checkpoint_options(reward_type):
     
     if not checkpoints:
         return []
-    
-    # Get every 5th checkpoint
+
     every_fifth = get_every_fifth_checkpoint(checkpoints)
     
     for steps in every_fifth:
@@ -81,10 +73,8 @@ def get_checkpoint_options(reward_type):
     
     return options
 
-# Sidebar for reward configuration
 st.sidebar.header("⚙️ Model Selection")
 
-# Reward type selector
 reward_type = st.sidebar.radio(
     "Select Reward Type",
     options=["Sparse", "Dense", "Compare Both"],
@@ -93,7 +83,6 @@ reward_type = st.sidebar.radio(
 
 # Checkpoint selector - gets options based on selected reward type
 if reward_type == "Compare Both":
-    # For Compare Both, get checkpoints from Sparse (they should be same in both)
     checkpoint_options = get_checkpoint_options("Sparse_base")
 else:
     checkpoint_options = get_checkpoint_options("dense_base")
@@ -179,7 +168,7 @@ with tab1:
                                 shutil.rmtree(p)
                         except Exception:
                             pass
-                    status_text.info("🗑️ Cleared previous videos")
+                    status_text.info("Cleared previous videos")
                 except Exception as e:
                     status_text.warning(f"Could not clear videos directory: {e}")
                 
@@ -330,12 +319,8 @@ with tab2:
             except Exception as e:
                 st.warning(f"Could not load stats from {stats_file.name}: {e}")
 
-# Footer
+
 st.divider()
-st.markdown("""
----
-**LunarLander Reward Shaper** | Made with Streamlit 🎈
-""")
 
 # Initialize session state
 if "running" not in st.session_state:
