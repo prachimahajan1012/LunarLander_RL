@@ -31,7 +31,7 @@ import torch
 # Reward wrappers
 # -------------------------
 class SparseTerminalRewardEnv(gym.Wrapper):
-    """Sparse reward: only terminal + step penalty."""
+    """Sparse reward: only terminal"""
     def __init__(self, env, success_reward=100.0, fail_reward=-100.0):
         super().__init__(env)
         self.success_reward = success_reward
@@ -58,7 +58,7 @@ class SparseTerminalRewardEnv(gym.Wrapper):
 
 class DenseFuelTerminalWrapper(gym.Wrapper):
     """Dense reward: penalize fuel usage per action."""
-    def __init__(self, env, fuel_cost=0.05):
+    def __init__(self, env, fuel_cost=0.5):
         super().__init__(env)
         self.fuel_cost = fuel_cost
 
@@ -88,7 +88,7 @@ def make_env(reward_type='dense', seed=0, record_video=False, video_dir=None, vi
         if reward_type == 'sparse':
             env = SparseTerminalRewardEnv(env, success_reward=100.0, fail_reward=-100.0)
         elif reward_type == 'dense':
-            env = DenseFuelTerminalWrapper(env, fuel_cost=0.05)
+            env = DenseFuelTerminalWrapper(env, fuel_cost=0.5)
         else:
             raise ValueError("unknown reward_type")
         # Optionally record video (env must support rgb frames)
@@ -174,7 +174,7 @@ def run_experiment(output_dir='experiments', reward_type='dense', n_timesteps=in
     final_eval_env = make_env(reward_type=reward_type, seed=seed+999,
                               record_video=record_videos, video_dir=final_video_dir,
                               video_prefix=f'final_{reward_type}_run{run_id}')()
-    stats = evaluate_model(model, final_eval_env, n_eval_episodes=100)
+    stats = evaluate_model(model, final_eval_env, n_eval_episodes=50)
     # save model and stats
     model_file = os.path.join(output_dir, f'ppo_{reward_type}_run{run_id}_seed{seed}.zip')
     model.save(model_file)

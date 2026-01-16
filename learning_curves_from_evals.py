@@ -132,10 +132,10 @@ def main():
     """Main function."""
     
     experiments_dir = Path(__file__).parent / "experiments"
-    output_dir = experiments_dir / "learning_curves_analysis_base"
+    output_dir = experiments_dir / "learning_curves_analysis"
     
     # Load sparse evaluations
-    sparse_eval_path = experiments_dir / "sparse_base" / "evaluations.npz"
+    sparse_eval_path = experiments_dir / "sparse" / "evaluations.npz"
     sparse_stats = None
     
     if sparse_eval_path.exists():
@@ -146,7 +146,7 @@ def main():
         print(f" Not found: {sparse_eval_path}")
     
     # Load dense evaluations
-    dense_eval_path = experiments_dir / "dense_base" / "evaluations.npz"
+    dense_eval_path = experiments_dir / "dense" / "evaluations.npz"
     dense_stats = None
     
     if dense_eval_path.exists():

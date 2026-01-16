@@ -23,7 +23,7 @@ python lunarlander_reward_shaping_experiment.py \
 
 ## Evaluation
 
-To evaluate a trained model simply launch our UI with:
+To evaluate a trained model and see videos of landing episodes simply launch our UI with:
 ```bash
 streamlit run app.py
 ```
@@ -53,8 +53,28 @@ python evaluate_model.py \
 Replace `sparse` with `dense` for dense reward evaluation. Uses the best model from your trained directory by default. 
 
 
+## Evaluation and Training Statistics
 
+To see log files and learning curves from the training phase run:
+```bash
+python learning_curves.py
+```
+Outputs convergence_report.txt file and learning_curves.png under experiments/learning_curves_analysis. Contains learning analysis and metrics from training.
 
+To see log files from evaluation run:
+```bash
+python eval_stats_log.py
+```
+Outputs evaluation_report.txt under experiments/learning_curves_analysis. 
 
+To see graphs from the evaluation phase run:
+```bash
+python learning_curves_from_evals.py
+```
+Outputs learning_curves_from_evaluations.png under the same folder.
 
-
+For and overall detailed metrics evaluation across all checkpoints run:
+```bash
+python extract_learning_metrics.py
+```
+Outputs file detailed_metrics_extraction.txt under the same folder.

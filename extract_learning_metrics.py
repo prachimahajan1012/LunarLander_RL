@@ -174,7 +174,7 @@ def main():
     """Main function."""
     
     experiments_dir = Path(__file__).parent / "experiments"
-    output_dir = experiments_dir / "learning_curves_analysis_base"
+    output_dir = experiments_dir / "learning_curves_analysis"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print("\n" + "=" * 110)
@@ -185,13 +185,13 @@ def main():
     sparse_stats = None
     dense_stats = None
     
-    sparse_path = experiments_dir / "sparse_base" / "evaluations.npz"
+    sparse_path = experiments_dir / "sparse" / "evaluations.npz"
     if sparse_path.exists():
         print(f"\nLoading sparse evaluations: {sparse_path}")
         sparse_stats = load_evaluations(sparse_path)
         print(f"  Loaded {len(sparse_stats['timesteps'])} checkpoints")
     
-    dense_path = experiments_dir / "dense_base" / "evaluations.npz"
+    dense_path = experiments_dir / "dense" / "evaluations.npz"
     if dense_path.exists():
         print(f"Loading dense evaluations: {dense_path}")
         dense_stats = load_evaluations(dense_path)

@@ -231,11 +231,11 @@ def generate_report(sparse_data, dense_data, output_dir: Path):
 
 def main():
     experiments_dir = Path(__file__).parent / "experiments"
-    output_dir = experiments_dir / "learning_curve_analysis"
+    output_dir = experiments_dir / "learning_curves_analysis"
 
     print("Collecting checkpoint evaluations...")
-    sparse_data = collect_learning_data(experiments_dir, "sparse_base")
-    dense_data = collect_learning_data(experiments_dir, "dense_base")
+    sparse_data = collect_learning_data(experiments_dir, "sparse")
+    dense_data = collect_learning_data(experiments_dir, "dense")
 
     if not sparse_data and not dense_data:
         print("ERROR: No checkpoint data found.")

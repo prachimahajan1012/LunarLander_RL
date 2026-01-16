@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Summary from evaluation data.
-Generates file 'evaluation_report.txt' under experiments/learning_curves_analysis_base/
+Generates file 'evaluation_report.txt' under experiments/learning_curves_analysis/
 """
 
 import numpy as np
@@ -9,8 +9,8 @@ from pathlib import Path
 
 experiments_dir = Path('experiments')
 
-dense_eval = np.load(experiments_dir / 'dense_base' / 'evaluations.npz')
-sparse_eval = np.load(experiments_dir / 'sparse_base' / 'evaluations.npz')
+dense_eval = np.load(experiments_dir / 'dense' / 'evaluations.npz')
+sparse_eval = np.load(experiments_dir / 'sparse' / 'evaluations.npz')
 
 report = []
 
@@ -38,7 +38,7 @@ report.append(f'  Initial return:       {sparse_returns[0]:>7.1f}')
 report.append(f'  Final return:         {sparse_returns[-1]:>7.1f}')
 report.append(f'  Best return:          {np.max(sparse_returns):>7.1f}')
 
-output_dir = experiments_dir / 'learning_curves_analysis_base'
+output_dir = experiments_dir / 'learning_curves_analysis'
 output_dir.mkdir(parents=True, exist_ok=True)
 report_path = output_dir / 'evaluation_report.txt'
 with open(report_path, 'w', encoding='utf-8') as f:

@@ -83,9 +83,9 @@ reward_type = st.sidebar.radio(
 
 # Checkpoint selector - gets options based on selected reward type
 if reward_type == "Compare Both":
-    checkpoint_options = get_checkpoint_options("Sparse_base")
+    checkpoint_options = get_checkpoint_options("sparse")
 else:
-    checkpoint_options = get_checkpoint_options("dense_base")
+    checkpoint_options = get_checkpoint_options("dense")
 
 if checkpoint_options:
     checkpoint_labels = [opt[0] for opt in checkpoint_options]
