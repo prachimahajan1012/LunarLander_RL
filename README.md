@@ -29,6 +29,17 @@ streamlit run app.py
 ```
 The app will open at `http://localhost:8501`
 
+## How to Use the UI
+
+1. Go to **Evaluation** tab
+2. Select the reward type you want to run evaluation for.
+3. Choose model checkpoint that you want to evaluate on.
+4. Choose the number of evaluation episodes you want to see.
+5. Click **Evaluate**
+6. View videos. 
+7. Go to **Results** tab to view the rest of the videos and some stats.
+
+
 To run evaluation without using the UI run:
 
 ```bash
@@ -41,15 +52,6 @@ python evaluate_model.py \
 
 Replace `sparse` with `dense` for dense reward evaluation. Uses the best model from your trained directory by default. 
 
-## How to Use the UI
-
-1. Go to **Evaluation** tab
-2. Select the reward type you want to run evaluation for.
-3. Choose model checkpoint that you want to evaluate on.
-4. Choose the number of evaluation episodes you want to see.
-5. Click **Evaluate**
-6. View videos. 
-7. Go to **Results** tab to view the rest of the videos and some stats.
 
 
 
