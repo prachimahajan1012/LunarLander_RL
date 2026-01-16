@@ -38,6 +38,7 @@ env/
 .DS_Store
 
 # Project specific
+experiments/
 experiments/videos_*/
 experiments/models_*/
 *.npz
